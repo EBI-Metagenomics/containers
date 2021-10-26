@@ -16,7 +16,7 @@ RUN apt update \
 
 # install fastp
 WORKDIR /usr/local/bin
-RUN wget -q -O fastp 'http://opengene.org/fastp/fastp.${fastpVer}' && \
+RUN wget -q -O fastp "http://opengene.org/fastp/fastp.${fastpVer}" && \
     chmod a+x fastp
 
 # for singularity compatibility
