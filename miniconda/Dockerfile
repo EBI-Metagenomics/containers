@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ARG minicondaVer=4.10.3
+ARG minicondaVer=4.11.0
 
 LABEL software="miniconda"
 LABEL software.version=${minicondaVer}
