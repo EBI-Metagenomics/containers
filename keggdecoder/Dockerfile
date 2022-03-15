@@ -13,6 +13,11 @@ RUN apt update && \
     apt install -y \
         python3 \
         python3-pip \
+        gfortran \
+        libpng-dev \
+        liblapack-dev \
+        libfreetype6-dev \ 
+        libfontconfig1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Dependencies
