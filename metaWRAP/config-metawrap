@@ -1,0 +1,16 @@
+# Paths to custon pipelines and scripts of metaWRAP
+mw_path=$(which metawrap)
+bin_path=${mw_path%/*}
+SOFT=${bin_path}/metawrap-scripts
+PIPES=${bin_path}/metawrap-modules
+
+# OPTIONAL databases (see 'Databases' section of metaWRAP README for details)
+# path to kraken standard databases
+KRAKEN2_DB=/dbs/kraken2_db
+
+# path to indexed human genome (see metaWRAP website for guide). This includes files hg38.bitmask and hg38.srprism.*
+BMTAGGER_DB=/dbs/bmtagger_db
+
+# paths to BLAST databases
+BLASTDB=/dbs/gu/ncbi_nt
+TAXDUMP=/dbs/ncbi_tax

@@ -1,6 +1,6 @@
 FROM quay.io/microbiome-informatics/miniconda:4.11.0
 
-ARG metawrapVer="1.3.2"
+ARG metawrapVer="1.3.3"
 
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
 LABEL base_image="ubuntu:20.04"
@@ -59,14 +59,25 @@ RUN mamba install -y \
 # Downloading source code
 WORKDIR /opt
 RUN git clone https://github.com/bxlab/metaWRAP.git
+COPY config-metawrap /opt/metaWRAP/bin/config-metawrap
 
-ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/miniconda/bin/:/opt/metaWRAP/bin
+# Create database mounting dirs
+RUN mkdir -p /dbs/checkm_db \
+             /dbs/kraken2_db \
+             /dbs/bmtagger_db \
+             /dbs/ncbi_nt \
+             /dbs/ncbi_tax
+
+# checkm config file
+COPY checkm_config /opt/miniconda/lib/python2.7/site-packages/checkm/DATA_CONFIG
+
+# Set PATH
+ENV PATH /opt/miniconda/bin/:/opt/metaWRAP/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # for singularity compatibility
 ENV LC_ALL=C
 
 # setting workdir
-#RUN mkdir /data
 WORKDIR /data
 
 # simple executor
