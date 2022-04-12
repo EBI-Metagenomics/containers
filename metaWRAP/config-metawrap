@@ -12,5 +12,5 @@ KRAKEN2_DB=/dbs/kraken2_db
 BMTAGGER_DB=/dbs/bmtagger_db
 
 # paths to BLAST databases
-BLASTDB=/dbs/gu/ncbi_nt
+BLASTDB=/dbs/ncbi_nt
 TAXDUMP=/dbs/ncbi_tax
