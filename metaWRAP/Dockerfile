@@ -54,12 +54,17 @@ RUN mamba install -y \
         spades=3.13.0 \
         taxator-tk=1.3.3e \
         trim-galore=0.5.0 \
-        python=2.7.15    ##for dep resolution
+        python=2.7.15 \
+        && conda clean -afy
 
 # Downloading source code
 WORKDIR /opt
+
 RUN git clone https://github.com/bxlab/metaWRAP.git
+
 COPY config-metawrap /opt/metaWRAP/bin/config-metawrap
+
+RUN chmod +x /opt/metaWRAP/bin/config-metawrap
 
 # Create database mounting dirs
 RUN mkdir -p /dbs/checkm_db \
