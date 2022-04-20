@@ -37,8 +37,7 @@ WORKDIR /opt
 RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.7.tar.gz -o trim_galore_0.6.7.tar.gz && \
     tar xvzf trim_galore_0.6.7.tar.gz
 
-ENV PATH="/opt/trim_galore_0.6.7/trim_galore:/opt/trim_galore_0.6.7:${PATH}"
+ENV PATH="/opt/TrimGalore-0.6.7/trim_galore:/opt/trim_galore_0.6.7:${PATH}"
 
-# Entrypoint
-ENTRYPOINT ["/bin/bash", "-c"]
-CMD trim_galore
+CMD ["/bin/bash", "-c"]
+#CMD trim_galore
