@@ -16,10 +16,11 @@ RUN apt update && \
         build-essential \
         curl \
         default-jre \
-        git \
         python3 \
         python3-dev \
-        python3-pip
+        python3-pip \
+        unzip \
+        wget
 
 # Install cutadapt
 WORKDIR /opt
@@ -27,17 +28,22 @@ RUN pip3 install --upgrade cutadapt
 
 # Install fastqc
 WORKDIR /opt
-RUN git clone https://github.com/s-andrews/FastQC.git && \
+RUN wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip && \
+    unzip fastqc_v0.11.9.zip && \
+    rm fastqc_v0.11.9.zip && \
     chmod 755 FastQC/fastqc
 
-ENV PATH="/opt/FastQC/fastqc:/opt/FastQC:${PATH}"
+ENV PATH="/opt/FastQC:${PATH}"
 
 # Install TrimGalore
 WORKDIR /opt
 RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.7.tar.gz -o trim_galore_0.6.7.tar.gz && \
-    tar xvzf trim_galore_0.6.7.tar.gz
+    tar xvzf trim_galore_0.6.7.tar.gz && \
+    rm trim_galore_0.6.7.tar.gz
 
-ENV PATH="/opt/TrimGalore-0.6.7/trim_galore:/opt/trim_galore_0.6.7:${PATH}"
+ENV PATH="/opt/TrimGalore-0.6.7:${PATH}"
+
+# for singularity compatibility
+ENV LC_ALL=C
 
 CMD ["/bin/bash", "-c"]
-#CMD trim_galore
