@@ -1,10 +1,10 @@
 FROM quay.io/microbiome-informatics/miniconda:4.11.0
 
-ARG metawrapVer="1.3.3"
+ENV VERSION="1.3"
 
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
 LABEL base_image="ubuntu:20.04"
-LABEL version="${metawrapVer}"
+LABEL version="${VERSION}"
 LABEL software="metaWRAP"
 LABEL website="https://github.com/bxlab/metaWRAP"
 LABEL license="https://github.com/bxlab/metaWRAP/blob/master/LICENSE"
@@ -54,12 +54,19 @@ RUN mamba install -y \
         spades=3.13.0 \
         taxator-tk=1.3.3e \
         trim-galore=0.5.0 \
-        python=2.7.15    ##for dep resolution
+        python=2.7.15 \
+        && conda clean -afy
 
 # Downloading source code
 WORKDIR /opt
-RUN git clone https://github.com/bxlab/metaWRAP.git
-COPY config-metawrap /opt/metaWRAP/bin/config-metawrap
+
+RUN wget -q https://github.com/bxlab/metaWRAP/archive/refs/tags/v${VERSION}.tar.gz && \
+    tar -xf v${VERSION}.tar.gz && \
+    rm -r v${VERSION}.tar.gz
+    
+COPY config-metawrap /opt/metaWRAP-${VERSION}/bin/config-metawrap
+
+RUN chmod +x /opt/metaWRAP-${VERSION}/bin/config-metawrap
 
 # Create database mounting dirs
 RUN mkdir -p /dbs/checkm_db \
@@ -72,7 +79,7 @@ RUN mkdir -p /dbs/checkm_db \
 COPY checkm_config /opt/miniconda/lib/python2.7/site-packages/checkm/DATA_CONFIG
 
 # Set PATH
-ENV PATH /opt/miniconda/bin/:/opt/metaWRAP/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH /opt/miniconda/bin/:/opt/metaWRAP-${VERSION}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # for singularity compatibility
 ENV LC_ALL=C
