@@ -1,6 +1,6 @@
 # Docker container for TrimGalore
 
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 LABEL software="TrimGalore"
 LABEL software.version="0.6.7"
@@ -13,18 +13,18 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
     apt upgrade -y && \
     apt install -y \
-        build-essential \
+        #build-essential \
         curl \
         default-jre \
         python3 \
-        python3-dev \
+        #python3-dev \
         python3-pip \
         unzip \
         wget
 
 # Install cutadapt
 WORKDIR /opt
-RUN pip3 install --upgrade cutadapt
+RUN pip3 install --upgrade cutadapt==4.0
 
 # Install fastqc
 WORKDIR /opt
