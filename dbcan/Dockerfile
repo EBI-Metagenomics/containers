@@ -19,7 +19,7 @@ RUN apt update && \
 # install conda packages
 RUN conda install -c anaconda conda-build \
   && conda install wget \
-  && conda install -c bioconda -y diamond hmmer prodigal \
+  && conda install -c bioconda -y diamond=0.9.14 hmmer=3.3.2 prodigal=2.6.3 \
   && conda clean -a
 
 # install dbcan via pip
