@@ -22,11 +22,20 @@ RUN conda install -c anaconda conda-build \
   && conda install -c bioconda 'hmmer>=3.1' \
   && conda clean -a
 
+# install kofam_scan
+WORKDIR /usr/local/bin
+RUN wget -q -O kofam_scan.gz https://github.com/takaram/kofam_scan/archive/refs/tags/v1.3.0.tar.gz && \
+    gunzip kofam_scan.gz && \ 
+    rm -rf kofam_scan.gz && \
+    chmod +x kofam_scan -R
+
 # for singularity compatibility
 ENV LC_ALL=C
 
 # setting workdir
 WORKDIR /data
+
+ENV PATH="/usr/local/bin/kofam_scan:${PATH}"
 
 # simple executor
 CMD ["/bin/bash", "-c"]
