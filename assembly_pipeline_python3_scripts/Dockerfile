@@ -2,6 +2,10 @@ FROM python:3.7.9-slim-buster
 
 #tag microbiome-informatics/assembly-pipeline.python:3.7.9
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
+LABEL software="assembly-pipeline.python"
+LABEL software.version="1.0.0"
+LABEL website="https://github.com/EBI-Metagenomics/CWL-assembly/tree/develop/cwl"
+LABEL license="https://github.com/EBI-Metagenomics/CWL-assembly/blob/develop/LICENSE"
 
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
 

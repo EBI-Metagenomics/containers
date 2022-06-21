@@ -27,11 +27,15 @@ RUN wget -q https://github.com/bwa-mem2/bwa-mem2/releases/download/v${bwamem2Ver
     mv bwa-mem2-${bwamem2Ver}_x64-linux/bwa-mem2* /usr/local/bin/ && \
     rm -rf bwa-mem2-${bwamem2Ver}_x64-linux*
 
-# aux scripts
+# aux scripts long reads pipeline
 COPY bwa-mem2.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/bwa-mem2.sh
 COPY bwa-mem2_filterHostFq.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/bwa-mem2_filterHostFq.sh
+
+#aux script assembly pipeline
+COPY map_host.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/map_host.sh
 
 # for singularity compatibility
 ENV LC_ALL=C
