@@ -15,7 +15,7 @@ LABEL license="https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/scrip
 RUN conda config --add channels bioconda
 
 RUN mamba install -c bioconda -y \
-    blast=2.12.0 \
+    blast=${VERSION} \
     && conda clean -afy
 
 # for singularity compatibility
