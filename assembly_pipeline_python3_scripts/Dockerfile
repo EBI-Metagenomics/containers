@@ -1,20 +1,26 @@
-FROM python:3.7.9-slim-buster
+FROM quay.io/microbiome-informatics/miniconda:4.11.0
 
-#tag microbiome-informatics/assembly-pipeline.python:3.7.9
+#tag microbiome-informatics/assembly-pipeline.python3_scripts:3.7.9
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
 LABEL software="assembly-pipeline.python"
 LABEL software.version="1.0.0"
 LABEL website="https://github.com/EBI-Metagenomics/CWL-assembly/tree/develop/cwl"
 LABEL license="https://github.com/EBI-Metagenomics/CWL-assembly/blob/develop/LICENSE"
 
-RUN apt-get update && rm -rf /var/lib/apt/lists/*
+# Dependencies
+RUN conda config --add channels bioconda && \
+    conda config --add channels conda-forge
 
-RUN /usr/local/bin/python -m pip install --upgrade pip && pip install --no-cache-dir -q biopython
+RUN mamba install -c conda-forge -y biopython && \
+    conda clean -afy
 
 COPY gen_stats_report.py \
      trim_fasta.py \
-/tools/
+/data/
 
-RUN chmod a+x /tools/*
+RUN chmod a+x /data/*
 
-ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/tools
+ENV PATH /opt/miniconda/bin/:/data/:${PATH}
+
+# for singularity compatibility
+ENV LC_ALL=C

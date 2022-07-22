@@ -16,6 +16,7 @@ RUN apt update && \
         samtools \
         wget \
         bzip2 \
+        pigz \
     && rm -rf /var/lib/apt/lists/*
 
 
