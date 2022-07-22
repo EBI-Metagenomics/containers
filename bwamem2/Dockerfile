@@ -2,6 +2,7 @@
 
 FROM ubuntu:20.04
 
+#tag microbiome-informatics/assembly-pipeline.bwamem2:2.2.1
 LABEL software="BWA-mem2"
 LABEL software.version="2.2.1"
 LABEL description="Bwa-mem2 is the next version of the bwa-mem algorithm in bwa. It produces alignment identical to bwa and is ~1.3-3.1x faster depending on the use-case, dataset and the running machine."
