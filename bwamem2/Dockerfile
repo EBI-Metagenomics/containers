@@ -35,9 +35,11 @@ RUN chmod +x /usr/local/bin/bwa-mem2.sh
 COPY bwa-mem2_filterHostFq.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/bwa-mem2_filterHostFq.sh
 
-#aux script assembly pipeline
+#aux scripts assembly pipeline
 COPY map_host.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/map_host.sh
+COPY count_fastq.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/count_fastq.sh
 
 # for singularity compatibility
 ENV LC_ALL=C
