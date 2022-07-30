@@ -87,7 +87,6 @@ if __name__ == '__main__':
     trimmed_file = filter_contig_length(contig_file, args.threshold, args.assembler)
     filtered_sequences = filter_sequences(trimmed_file, args.blast)
 
-    # Overwrite contig file as it was backed up
     final_contig_file = args.run_id + '.fasta.gz'
     compress_file(filtered_sequences, final_contig_file)
 
