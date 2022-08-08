@@ -19,7 +19,7 @@ RUN apt update && \
 # install conda packages
 RUN conda install -c anaconda conda-build \
   && conda install -c conda-forge ruby=2.4.1 \
-  && conda install -c bioconda 'hmmer>=3.1' \
+  && conda install -c bioconda hmmer=3.1 \
   && conda clean -a
 
 # install kofam_scan
