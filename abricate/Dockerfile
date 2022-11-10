@@ -34,11 +34,11 @@ RUN /opt/abricate/bin/abricate --check
 RUN /opt/abricate/bin/abricate --setupdb
 RUN /opt/abricate/bin/abricate /opt/abricate/test/assembly.fa
 
-ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/abricate/bin/abricate
+ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/abricate/bin/
 
 # for singularity compatibility
 ENV LC_ALL=C
 
 # simple executor
-CMD ["/opt/abricate/bin/abricate"]
+CMD ["abricate"]
 
