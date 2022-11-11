@@ -1,6 +1,5 @@
 # Docker container for SPAdes
-
-FROM ubuntu:20.04
+FROM python:3.7.9-slim-buster
 
 ARG spadesVer=3.15.3
 
@@ -14,7 +13,6 @@ LABEL license="GPLv2"
 RUN apt update && \
     apt upgrade -y && \
     apt install -y \
-        python \
         wget && \
     apt-get autoclean && \
     rm -rf /var/lib/apt/lists/*
@@ -25,6 +23,8 @@ RUN wget -q https://github.com/ablab/spades/releases/download/v${spadesVer}/SPAd
     tar zxf SPAdes-${spadesVer}-Linux.tar.gz && \
     rm SPAdes-${spadesVer}-Linux.tar.gz && \
     ln -s /opt/SPAdes-${spadesVer}-Linux/bin/* /usr/local/bin
+
+RUN chmod +x /usr/local/bin/
 
 # for singularity compatibility
 ENV LC_ALL=C
