@@ -15,3 +15,5 @@ RUN apt-get update -q && \
         sed \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+RUN conda install mamba -n base -c conda-forge && conda clean -y -a
