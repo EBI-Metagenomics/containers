@@ -7,11 +7,17 @@ LABEL website="https://github.com/grp-bork/gunc"
 LABEL license="GPLv3"
 
 RUN apt update && \
-    apt upgrade -y && \
-    apt install -y \
+    apt-get install -q -y --no-install-recommends \
         python3 \
         python3-pip \
-        wget
+        wget \
+        original-awk \
+        dateutils \
+        procps \
+        pcregrep \
+        sed \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/local/bin
 
@@ -27,14 +33,7 @@ RUN wget -O prodigal https://github.com/hyattpd/Prodigal/releases/download/v$pro
     chmod a+x prodigal
 
 # Install GUNC
-RUN pip3 install gunc
-
-# Workdir
-RUN mkdir /data
-WORKDIR /data
-
-COPY filter.sh /tools/
-RUN chmod a+x /tools/*
+RUN pip3 install gunc==1.0.3
 
 ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/tools
 
