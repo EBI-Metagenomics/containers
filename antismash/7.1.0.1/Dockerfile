@@ -46,5 +46,9 @@ RUN wget https://github.com/antismash/antismash/archive/refs/tags/$VERSION.tar.g
 
 RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -U antismash/
 
+# Download, configure the DBs and then delete them
+RUN PYTHONDONTWRITEBYTECODE=1 python /opt/antismash/antismash/download_databases.py --database-dir /opt/antismash_databases && \
+    rm -r /opt/antismash_databases
+
 ENV PATH=/opt/conda/bin:${PATH}
 
