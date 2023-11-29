@@ -11,7 +11,8 @@ LABEL software.version="4.0.0"
 # set work dir
 WORKDIR /app
 
-RUN conda install -c conda-forge -c bioconda python=3.8 diamond hmmer prodigal dbcan=4.0.0 && \
+RUN conda install -c conda-forge -c bioconda -c anaconda python=3.8 \
+    diamond hmmer prodigal dbcan=4.0.0 openpyxl matplotlib && \
     conda clean -ya 
     
 
