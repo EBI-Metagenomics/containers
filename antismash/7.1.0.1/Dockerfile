@@ -34,6 +34,7 @@ RUN conda install -c bioconda -c conda-forge\
     'meme==4.11.2' \
     blast \
     prodigal \
+    nodejs \
     --yes --freeze-installed && conda clean -afy
 
 RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir 'nrpys>=0.1.1'
