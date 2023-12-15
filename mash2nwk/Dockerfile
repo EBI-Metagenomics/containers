@@ -7,7 +7,13 @@ LABEL website="https://github.com/EBI-Metagenomics/genomes-pipeline"
 LABEL license="GPLv3"
 
 RUN apt-get update \
-    && apt-get install -y procps \
+    && apt-get install -q -y --no-install-recommends \
+            procps \
+            original-awk \
+            dateutils \
+            procps \
+            pcregrep \
+            sed \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && R -e "install.packages(c('reshape2', 'fastcluster', 'optparse', 'data.table', 'ape'), repos='http://cran.rstudio.com/')" \
