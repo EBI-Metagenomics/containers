@@ -12,6 +12,7 @@ WORKDIR /opt/gtdbtk_src
 
 RUN wget https://github.com/Ecogenomics/GTDBTk/archive/refs/tags/${VERSION}.tar.gz -O gtdbtk_${VERSION}.tar.gz && \
     tar -xzvf gtdbtk_${VERSION}.tar.gz --strip-components=1 && \
-    cp /opt/gtdbtk_src/scripts/gtdb_to_ncbi_majority_vote.py /usr/local/bin
+    wget https://raw.githubusercontent.com/Ecogenomics/GTDBTk/0a7ff4a97aa1d538a878f3a339d8959e634c61ef/scripts/gtdb_to_ncbi_majority_vote.py -P /usr/local/bin && \
+    chmod a+x /usr/local/bin/gtdb_to_ncbi_majority_vote.py
 
 ENV PYTHONPATH="/opt/gtdbtk_src:${PYTHONPATH}"
