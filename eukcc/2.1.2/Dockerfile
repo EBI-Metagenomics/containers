@@ -22,10 +22,10 @@ RUN conda config --set ssl_verify no \
             samtools=1.12 \
     && conda clean --all \
     && pip install jsonpickle numpy ete3 \
-    && pip install https://github.com/Finn-Lab/EukCC/archive/refs/heads/master.zip
+    && pip install https://github.com/EBI-Metagenomics/EukCC/archive/refs/tags/v.2.1.2.zip
 
 # Add version information
-ADD https://api.github.com/repos/Finn-Lab/EukCC/git/refs/heads/master version.json
+ADD https://api.github.com/repos/EBI-Metagenomics/EukCC/git/refs/tags/v.2.1.2 version.json
 
 # Set the entry point for the container
 ENTRYPOINT ["eukcc"]
