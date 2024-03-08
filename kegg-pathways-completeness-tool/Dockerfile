@@ -6,6 +6,9 @@ LABEL Maintainer="Ekaterina Sakharova <kates@ebi.ac.uk>"
 RUN apk add --no-cache --update-cache --update python3 gzip git && \
     apk add --no-cache --update py3-pip && \
     apk add --no-cache --update bash && \
+    apk add --no-cache --update dateutils && \
+    apk add --no-cache --update procps && \
+    apk add --no-cache --update pcre && \
     git clone https://github.com/EBI-Metagenomics/kegg-pathways-completeness-tool.git && \
     pip3 install --upgrade pip && \
     pip3 install -r kegg-pathways-completeness-tool/requirements.txt
