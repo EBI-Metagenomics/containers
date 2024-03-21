@@ -29,7 +29,7 @@ RUN wget -q https://github.com/bwa-mem2/bwa-mem2/releases/download/v${bwamem2Ver
     mv bwa-mem2-${bwamem2Ver}_x64-linux/bwa-mem2* /usr/local/bin/ && \
     rm -rf bwa-mem2-${bwamem2Ver}_x64-linux*
 
-# metabat2 2.17
+# metabat2 2.16
 RUN wget https://bitbucket.org/berkeleylab/metabat/get/1dc5822668165fb32bb4b608b0816b42dbfd20d0.tar.gz \
     && tar xzvf *.tar.gz \
     && mv berkeleylab-metabat-* /usr/local/bin/ \
