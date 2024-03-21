@@ -4,9 +4,9 @@ FROM ubuntu:20.04
 
 # install dependencies
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt update && \
-    apt upgrade -y && \
-    apt install -y \
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
         build-essential \
         samtools \
         wget \
@@ -14,6 +14,11 @@ RUN apt update && \
         cmake \
         git \
         libboost-all-dev \
+        original-awk \
+        dateutils \
+        procps \
+        pcregrep \
+        sed \
     && rm -rf /var/lib/apt/lists/*
 
 # install bwamem2
@@ -24,9 +29,9 @@ RUN wget -q https://github.com/bwa-mem2/bwa-mem2/releases/download/v${bwamem2Ver
     mv bwa-mem2-${bwamem2Ver}_x64-linux/bwa-mem2* /usr/local/bin/ && \
     rm -rf bwa-mem2-${bwamem2Ver}_x64-linux*
 
-# metabat2
-RUN wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz \
-    && tar xzvf master.tar.gz \
+# metabat2 2.17
+RUN wget https://bitbucket.org/berkeleylab/metabat/get/1dc5822668165fb32bb4b608b0816b42dbfd20d0.tar.gz \
+    && tar xzvf *.tar.gz \
     && mv berkeleylab-metabat-* /usr/local/bin/ \
     && cd /usr/local/bin/berkeleylab-metabat-* \
     && mkdir -p build \
