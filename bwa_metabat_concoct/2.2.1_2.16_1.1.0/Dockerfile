@@ -19,6 +19,7 @@ RUN apt-get update && \
         procps \
         pcregrep \
         sed \
+        tabix \
         python3-pip libgsl0-dev bedtools mummer \
     && pip3 install --upgrade pip \
     && rm -rf /var/lib/apt/lists/*
