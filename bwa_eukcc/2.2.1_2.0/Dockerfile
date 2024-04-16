@@ -19,8 +19,9 @@ RUN apt-get update && \
         procps \
         pcregrep \
         sed \
-        python3-pip libgsl0-dev bedtools mummer \
+        python3-pip libgsl0-dev \
     && pip3 install --upgrade pip \
+    && pip3 install pysam biopython \
     && rm -rf /var/lib/apt/lists/*
 
 # install bwamem2
@@ -31,13 +32,12 @@ RUN wget -q https://github.com/bwa-mem2/bwa-mem2/releases/download/v${bwamem2Ver
     mv bwa-mem2-${bwamem2Ver}_x64-linux/bwa-mem2* /usr/local/bin/ && \
     rm -rf bwa-mem2-${bwamem2Ver}_x64-linux*
 
-ENV eukccVer=2.1
+ENV eukccVer=2.0
 RUN wget https://github.com/EBI-Metagenomics/EukCC/archive/refs/tags/v.${eukccVer}.tar.gz \
     && tar xzvf v.${eukccVer}.tar.gz \
     && cd EukCC-v.${eukccVer} \
     && python3 setup.py sdist bdist_wheel \
     && pip3 install -e .
-
 
 RUN mkdir /data
 WORKDIR /data
