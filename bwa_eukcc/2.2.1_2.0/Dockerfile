@@ -45,8 +45,5 @@ WORKDIR /data
 # for singularity compatibility
 ENV LC_ALL=C
 
-COPY ggp_binlinks.py /usr/local/bin/
-RUN chmod +x /usr/local/bin/ggp_binlinks.py
-
 # simple executor
 CMD ["/bin/bash", "-c"]
