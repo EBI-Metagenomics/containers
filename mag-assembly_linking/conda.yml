@@ -2,9 +2,14 @@ channels:
 - conda-forge
 - bioconda
 dependencies:
-- conda-forge::biopython=1.83
-- conda-forge::pandas=2.2.2
-- conda-forge::requests=2.31.0
+- conda-forge::biopython=1.84
+- conda-forge::boto3=1.35.17
+- conda-forge::botocore=1.35.17
+- conda-forge::python_abi=3.10
+- conda-forge::requests=2.32.3
 - conda-forge::retry=0.9.2
-- conda-forge::tqdm=4.66.4
+- conda-forge::tqdm=4.66.5
 - conda-forge::xmltodict=0.13.0
+- pip
+- pip:
+  - pandas==2.2.2
