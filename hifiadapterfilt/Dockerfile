@@ -36,7 +36,10 @@ ENV PATH=/ncbi-blast-${blastVer}+/bin:$PATH
 WORKDIR /opt
 RUN git clone https://github.com/sheinasim/HiFiAdapterFilt.git
 
-WORKDIR /opt/HiFiAdapterFilt
+ENV PATH=/opt/HiFiAdapterFilt:$PATH
+ENV PATH=/opt/HiFiAdapterFilt/DB:$PATH
+
+WORKDIR /data
 
 # for singularity compatibility
 ENV LC_ALL=C
