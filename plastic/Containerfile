@@ -1,0 +1,18 @@
+FROM mambaorg/micromamba:2.0.2
+
+LABEL software="plastiC"
+LABEL software.version="0.1.2"
+LABEL description="Runtime requirements for plastiC, which is a Snakemake workflow for recovery and characterization of plastid genomes from metagenomic datasets."
+LABEL website="https://github.com/Finn-Lab/plastiC"
+LABEL license="GPLv3"
+
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.yaml /tmp/env.yaml
+
+RUN micromamba install -y -n base -f /tmp/env.yaml && \
+    micromamba clean --all --yes
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
+
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
