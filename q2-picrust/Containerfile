@@ -1,0 +1,11 @@
+FROM quay.io/qiime2/amplicon:2024.5
+
+RUN wget -q https://github.com/picrust/q2-picrust2/archive/refs/tags/2024.5_0.tar.gz
+
+RUN tar -xzf 2024.5_0.tar.gz && cd q2-picrust2-2024.5_0 && pip install -e .
+
+RUN conda config --remove channels defaults && \
+    conda config --add channels 'http://hof.cluster.embl.de/conda-forge' && \
+    conda config --add channels 'http://hof.cluster.embl.de/bioconda'
+    
+RUN conda install -n qiime2-amplicon-2024.5 -c http://hof.cluster.embl.de/bioconda picrust2
