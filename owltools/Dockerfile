@@ -1,4 +1,6 @@
-FROM maven:3.9.9-eclipse-temurin-23-noble
+FROM mambaorg/micromamba:2.0.5
+
+USER root
 
 LABEL maintainer="Microbiome Informatics Team www.ebi.ac.uk/metagenomics"
 
@@ -6,10 +8,17 @@ LABEL version="1"
 LABEL software="owltools"
 LABEL software.version="2024-06-12"
 
-RUN apt install git
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.yml /tmp/env.yml
 
-RUN git clone https://github.com/owlcollab/owltools.git && \
-    cd /owltools/OWLTools-Parent && \
-    mvn clean install
+RUN micromamba install -y -n base -f /tmp/env.yml \
+    && micromamba install -y -n base conda-forge::procps-ng \
+    && micromamba clean -a -y
 
-ENV PATH="$PATH:/owltools/OWLTools-Runner/target"
+RUN apt-get update \
+    && apt-get install -y wget
+
+RUN wget https://github.com/owlcollab/owltools/releases/download/2024-06-12/owltools
+
+RUN chmod +x owltools
+
+ENV PATH="$PATH:/tmp"
