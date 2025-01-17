@@ -12,6 +12,8 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER env.yml /tmp/env.yml
 
 RUN micromamba install -y -n base -f /tmp/env.yml \
     && micromamba install -y -n base conda-forge::procps-ng \
+    && micromamba env export --name base --explicit > environment.lock \
+    && cat environment.lock \
     && micromamba clean -a -y
 
 ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
@@ -24,5 +26,9 @@ WORKDIR /opt
 RUN wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/${VERSION}/alt/interproscan-core-${VERSION}.tar.gz && \
     tar -xzf interproscan-core-${VERSION}.tar.gz && \
     rm interproscan-core-${VERSION}.tar.gz
+
+RUN cp /opt/interproscan-${VERSION}/interproscan.properties /opt/interproscan-${VERSION}/interproscan.properties.bak
+
+COPY interproscan.properties /opt/interproscan-${VERSION}/interproscan.properties
 
 ENV PATH="/opt/interproscan-${VERSION}/:$PATH"
