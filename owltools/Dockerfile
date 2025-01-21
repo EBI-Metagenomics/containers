@@ -20,4 +20,4 @@ RUN wget https://github.com/owlcollab/owltools/releases/download/2024-06-12/owlt
 
 RUN chmod +x owltools
 
-ENV PATH="$PATH:/tmp"
+RUN mv owltools /bin
