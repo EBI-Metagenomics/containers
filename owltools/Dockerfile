@@ -14,8 +14,7 @@ RUN micromamba install -y -n base -f /tmp/env.yml \
     && micromamba install -y -n base conda-forge::procps-ng \
     && micromamba clean -a -y
 
-RUN apt-get update \
-    && apt-get install -y wget
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
 
 RUN wget https://github.com/owlcollab/owltools/releases/download/2024-06-12/owltools
 
