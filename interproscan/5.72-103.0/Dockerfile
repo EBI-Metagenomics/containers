@@ -8,13 +8,10 @@ LABEL description="InterProScan is a search engine for InterPro is a database wh
 LABEL website="https://github.com/ebi-pf-team/interproscan"
 LABEL license="Apache 2.0"
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER env.yml /tmp/env.yml
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.lock /tmp/env.lock 
 
-RUN micromamba install -y -n base -f /tmp/env.yml \
-    && micromamba install -y -n base conda-forge::procps-ng \
-    && micromamba env export --name base --explicit > environment.lock \
-    && cat environment.lock \
-    && micromamba clean -a -y
+RUN micromamba install --name base --yes --file /tmp/env.lock \
+    && micromamba clean --all --yes
 
 ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
 
