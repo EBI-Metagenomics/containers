@@ -13,6 +13,13 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER env.lock /tmp/env.lock
 RUN micromamba install --name base --yes --file /tmp/env.lock \
     && micromamba clean --all --yes
 
+# This is to install libgomp - installing this with conda doesn't work for bin/cdd/rpsblast
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+USER $MAMBA_USER
+
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 USER root
@@ -34,4 +41,4 @@ RUN echo "binary.phobius.pl.path=/opt/interproscan/licensed/phobius/phobius.pl" 
     echo "binary.tmhmm.path=/opt/interproscan/licensed/tmhmm/decodeanhmm.Linux_x86_64" >> interproscan.properties && \
     echo "tmhmm.model.path=/opt/interproscan/licensed/tmhmm/TMHMM2.0.model" >> interproscan.properties
 
-ENV PATH="/opt/interproscan-${VERSION}/:$PATH"
+ENV PATH="/opt/interproscan/:$PATH"
