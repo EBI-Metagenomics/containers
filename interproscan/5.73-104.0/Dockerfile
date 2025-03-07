@@ -41,4 +41,4 @@ RUN echo "binary.phobius.pl.path=/opt/interproscan/licensed/phobius/phobius.pl" 
     echo "binary.tmhmm.path=/opt/interproscan/licensed/tmhmm/decodeanhmm.Linux_x86_64" >> interproscan.properties && \
     echo "tmhmm.model.path=/opt/interproscan/licensed/tmhmm/TMHMM2.0.model" >> interproscan.properties
 
-ENV PATH="/opt/interproscan/:$PATH"
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:/opt/interproscan/:$PATH"
