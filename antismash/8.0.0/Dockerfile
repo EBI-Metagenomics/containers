@@ -7,3 +7,7 @@ RUN download-antismash-databases && antismash --prepare-data && antismash --chec
 
 RUN python -c "from antismash.modules.nrps_pks import prepare_data; prepare_data()" && \
     cp /usr/local/lib/python3.11/site-packages/antismash/modules/nrps_pks/data/terminals/*.brawn_cache /usr/local/lib/python3.11/site-packages/antismash/modules/nrps_pks/data/
+
+# Generate the font cache for matplot lib - https://github.com/antismash/antismash/issues/837#issuecomment-2893858536
+# Should safe a few seconds when running the container
+RUN mkdir /matplotlib && MPLCONFIGDIR=/matplotlib python3 -c "import matplotlib.pyplot as plt" && chmod -R a+rw /matplotlib
