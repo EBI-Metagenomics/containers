@@ -1,0 +1,89 @@
+version: '3'
+
+vars:
+  REGISTRY: quay.io/microbiome-informatics
+  PLATFORMS: linux/arm64,linux/amd64
+
+tasks:
+  build:
+    desc: Build a container image for a tool
+    summary: |
+      Build a multi-platform container image
+
+      Usage:
+        task build TOOL=interproscan VERSION=5.76-107.0
+        task build TOOL=antismash VERSION=8.0.0
+    vars:
+      TOOL: '{{.TOOL | default ""}}'
+      VERSION: '{{.VERSION | default ""}}'
+      PATH: '{{.TOOL}}/{{.VERSION}}'
+    cmds:
+      - |
+        if [ -z "{{.TOOL}}" ] || [ -z "{{.VERSION}}" ]; then
+          echo "Error: TOOL and VERSION are required"
+          echo "Usage: task build TOOL=interproscan VERSION=5.76-107.0"
+          exit 1
+        fi
+        if [ ! -d "{{.PATH}}" ]; then
+          echo "Error: Directory {{.PATH}} does not exist"
+          exit 1
+        fi
+        if [ ! -f "{{.PATH}}/Dockerfile" ]; then
+          echo "Error: Dockerfile not found in {{.PATH}}"
+          exit 1
+        fi
+        docker buildx build \
+          --platform {{.PLATFORMS}} \
+          --tag {{.REGISTRY}}/{{.TOOL}}:{{.VERSION}} \
+          {{.PATH}}
+
+  build-push:
+    desc: Build and push a container image
+    summary: |
+      Build and push a multi-platform container image to the registry
+
+      Usage:
+        task build-push TOOL=interproscan VERSION=5.76-107.0
+    vars:
+      TOOL: '{{.TOOL | default ""}}'
+      VERSION: '{{.VERSION | default ""}}'
+      PATH: '{{.TOOL}}/{{.VERSION}}'
+    cmds:
+      - |
+        if [ -z "{{.TOOL}}" ] || [ -z "{{.VERSION}}" ]; then
+          echo "Error: TOOL and VERSION are required"
+          echo "Usage: task build-push TOOL=interproscan VERSION=5.76-107.0"
+          exit 1
+        fi
+        if [ ! -d "{{.PATH}}" ]; then
+          echo "Error: Directory {{.PATH}} does not exist"
+          exit 1
+        fi
+        if [ ! -f "{{.PATH}}/Dockerfile" ]; then
+          echo "Error: Dockerfile not found in {{.PATH}}"
+          exit 1
+        fi
+        docker buildx build \
+          --platform {{.PLATFORMS}} \
+          --tag {{.REGISTRY}}/{{.TOOL}}:{{.VERSION}} \
+          --push \
+          {{.PATH}}
+
+  list:
+    desc: List all available tools and versions
+    cmds:
+      - |
+        echo "Available containers:"
+        for tool in */; do
+          tool=${tool%/}
+          if [ -d "$tool" ] && [ "$tool" != ".*" ]; then
+            echo ""
+            echo "$tool:"
+            for version in "$tool"/*; do
+              if [ -d "$version" ] && [ -f "$version/Dockerfile" ]; then
+                version=${version#$tool/}
+                echo "  - $version"
+              fi
+            done
+          fi
+        done
