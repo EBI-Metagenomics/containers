@@ -35,19 +35,24 @@ RUN pip install --no-cache-dir \
     pandas==2.2.2 \
     xgboost==2.1.1
 
+# Download + extract PathoFact2, move only runtime scripts
+RUN set -eux; \
+    mkdir -p /opt/pathofact2/bin; \
+    curl -fsSL "${PATHOFACT2_TARBALL_URL}" -o /tmp/pathofact2.tar.gz; \
+    tar -xzf /tmp/pathofact2.tar.gz -C /tmp; \
+    mv /tmp/pathofact2-${PATHOFACT2_TAG}/src/*.py /opt/pathofact2/bin/; \
+    rm -rf /tmp/pathofact2*;
 
-# Download + extract PathoFact2 source release, expose scripts
-RUN mkdir -p /opt/pathofact2 \
-    && curl -fsSL "${PATHOFACT2_TARBALL_URL}" -o /tmp/pathofact2.tar.gz \
-    && tar -xzf /tmp/pathofact2.tar.gz -C /opt/pathofact2 \
-    && rm -f /tmp/pathofact2.tar.gz
+# Ensure predict.py has a proper shebang
+RUN sed -i '1s|^|#!/usr/bin/env python\n|' /opt/pathofact2/bin/predict.py
 
-# Make the src scripts directly callable
-ENV PATH="/opt/pathofact2/pathofact2-${PATHOFACT2_TAG}/src:${PATH}"
+# Make scripts executable
+RUN chmod +x /opt/pathofact2/bin/*.py || true
 
-# Make scripts executable (if needed)
-RUN chmod +x /opt/pathofact2/pathofact2-${PATHOFACT2_TAG}/src/*.py || true
+# Make scripts visible
+ENV PATH="/opt/pathofact2/bin:${PATH}"
 
+# Default working directory where the scripts live
 WORKDIR /data
 
 CMD ["/bin/bash", "-c"]
