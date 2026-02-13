@@ -4,7 +4,7 @@ ARG VERSION=5.76-107.0
 
 LABEL software="InterProScan"
 LABEL software.version="5.76-107.0"
-LABEL description="InterProScan is a search engine for InterPro is a database which integrates together predictive information about proteins' function."
+LABEL description="InterProScan is a search engine for InterPro, a database that integrates predictive information about protein functions."
 LABEL website="https://github.com/ebi-pf-team/interproscan"
 LABEL license="Apache 2.0"
 
