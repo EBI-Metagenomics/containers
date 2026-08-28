@@ -1,58 +1,87 @@
-# Central repository for containers used in the Microbiome Informatics Team at EMBL - EBI
+# Container images
 
-## Using the Taskfile
+This repository contains container definitions used by the Microbiome Informatics Team at EMBL-EBI. Each container is kept in a tool/version directory containing a `Dockerfile` and, where applicable, an environment file.
 
-This repository uses [Task](https://taskfile.dev) to simplify building and managing container images.
+## Requirements
 
-### Prerequisites
+- Python 3.9 or newer
+- Docker with Buildx support
+- Internet access for `latest`, Git-based `bootstrap`, and `update` operations
 
-- Docker with buildx support
-- Taskfile.dev installed (see https://taskfile.dev/installation/)
+## Build images
 
-### Available Commands
-
-#### Building Images
-
-To build a container image locally for a specific tool and version:
+Use `build.py` to build a container for a tool and version:
 
 ```bash
-task build TOOL=mgnify-pipelines-toolkit VERSION=1.4.9
+./build.py build interproscan 5.76-107.0_patch1
 ```
 
-This command builds a multi-platform image (linux/amd64 and linux/arm64) from the Dockerfile located in `mgnify-pipelines-toolkit/1.4.9/`. The image is tagged as `quay.io/microbiome-informatics/mgnify-pipelines-toolkit:1.4.9`.
+Images are tagged in the default registry as `quay.io/microbiome-informatics/TOOL:VERSION` and built for `linux/arm64,linux/amd64` by default.
 
-#### Building and Pushing Images
-
-To build and push an image directly to the Quay.io registry:
+To build and push an image to quay.io:
 
 ```bash
-task build-push TOOL=mgnify-pipelines-toolkit VERSION=1.4.9
+./build.py build-push interproscan 5.76-107.0_patch1
 ```
 
-This performs the same build process but additionally pushes the resulting image to the registry. You must be authenticated to the `quay.io/microbiome-informatics` organization.
+You must be authenticated to the `quay.io/microbiome-informatics` organization before pushing.
 
-#### Listing Available Tools
-
-To see all available tools and versions in the repository:
+The registry, platforms, and repository root can be changed with options or environment variables:
 
 ```bash
-task list
+CONTAINER_REGISTRY=quay.io/example \
+CONTAINER_PLATFORMS=linux/amd64 \
+./build.py build --root . interproscan 5.76-107.0_patch1
 ```
 
-This scans the directory structure and displays all tools with their available versions.
+Run `./build.py --help` or `./build.py COMMAND --help` for all options.
 
-### Repository Structure
+## Manage container definitions
 
-Each tool is organized in the following structure:
+List all versioned containers:
 
+```bash
+./build.py list
 ```
+
+Create a micromamba-based definition from a conda package:
+
+```bash
+./build.py bootstrap my-tool 1.2.3 --package package-name
+```
+
+A pip-installable Python package can be built from a GitHub repository when it is not available as a conda package. The repository must support installation through `pip install git+URL`; this Git source option is not intended for arbitrary repositories. The branch or tag is resolved to a commit SHA. Its first seven characters become the directory version; the generated Dockerfile retains the full SHA for an exact source pin:
+
+```bash
+./build.py bootstrap gemsparcl main \
+  --git-url https://github.com/johannahelene/gemsparcl \
+  --git-ref main
+```
+
+Query the latest conda package version or resolve a GitHub ref:
+
+```bash
+./build.py latest interproscan
+./build.py latest gemsparcl \
+  --git-url https://github.com/johannahelene/gemsparcl \
+  --git-ref main
+```
+
+Copy an existing definition to the latest package version or Git commit:
+
+```bash
+./build.py update interproscan 5.76-107.0_patch1 --yes
+```
+
+Review generated or updated files before building them. Existing non-empty destinations are protected unless `--force` is supplied.
+
+## Repository layout
+
+```text
 tool-name/
 └── version/
-    └── Dockerfile
+    ├── Dockerfile
+    └── env.yaml
 ```
 
-For example, `mgnify-pipelines-toolkit/1.4.9/Dockerfile` contains the build instructions for version 1.4.9 of the MGnify Pipelines Toolkit.
-
-### Image Registry
-
-All images are pushed to the Quay.io registry under the `microbiome-informatics` organization. Images are available at [quay.io/microbiome-informatics](https://quay.io/repository/microbiome-informatics)
+Images are published under the [`microbiome-informatics` Quay.io organization](https://quay.io/repository/microbiome-informatics).
