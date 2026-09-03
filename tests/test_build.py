@@ -18,6 +18,41 @@ class PackageSpecTests(unittest.TestCase):
         )
 
 
+class BuildTests(unittest.TestCase):
+    def test_build_can_disable_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            container = root / "tools" / "1.0"
+            container.mkdir(parents=True)
+            (container / "Dockerfile").write_text("FROM scratch\n")
+            with patch.object(build.subprocess, "run") as run:
+                self.assertEqual(
+                    build.main(["build", "tools", "1.0", "--root", str(root), "--no-cache"]),
+                    0,
+                )
+
+            command = run.call_args.args[0]
+            self.assertIn("--no-cache", command)
+
+    def test_build_push_can_disable_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            container = root / "tools" / "1.0"
+            container.mkdir(parents=True)
+            (container / "Dockerfile").write_text("FROM scratch\n")
+            with patch.object(build.subprocess, "run") as run:
+                self.assertEqual(
+                    build.main(
+                        ["build-push", "tools", "1.0", "--root", str(root), "--no-cache"]
+                    ),
+                    0,
+                )
+
+            command = run.call_args.args[0]
+            self.assertIn("--no-cache", command)
+            self.assertIn("--push", command)
+
+
 class BootstrapTests(unittest.TestCase):
     def test_bootstrap_writes_multiple_packages_and_builds(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -42,9 +77,14 @@ class BootstrapTests(unittest.TestCase):
                 )
 
             env = (root / "tools" / "1.0" / "env.yaml").read_text()
-            self.assertIn("  - conda-forge::procps-ng", env)
+            self.assertNotIn("procps-ng", env)
             self.assertIn("  - seqkit=2.13.0", env)
             self.assertIn("  - samtools=1.20", env)
+            dockerfile = (root / "tools" / "1.0" / "Dockerfile").read_text()
+            self.assertIn(
+                "RUN micromamba install -y -n base conda-forge::procps-ng",
+                dockerfile,
+            )
             command = run.call_args.args[0]
             self.assertEqual(command[:3], ["docker", "buildx", "build"])
             self.assertEqual(command[-1], str((root / "tools" / "1.0").resolve()))

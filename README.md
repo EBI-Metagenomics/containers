@@ -24,6 +24,13 @@ To build and push an image to quay.io:
 ./build.py build-push interproscan 5.76-107.0_patch1
 ```
 
+Add `--no-cache` to either command to build the image from scratch:
+
+```bash
+./build.py build --no-cache interproscan 5.76-107.0_patch1
+./build.py build-push --no-cache interproscan 5.76-107.0_patch1
+```
+
 You must be authenticated to the `quay.io/microbiome-informatics` organization before pushing.
 
 The registry, platforms, and repository root can be changed with options or environment variables:

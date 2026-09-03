@@ -20,7 +20,6 @@ from urllib.request import Request, urlopen
 DEFAULT_REGISTRY = "quay.io/microbiome-informatics"
 DEFAULT_PLATFORMS = "linux/arm64,linux/amd64"
 DEFAULT_BASE_IMAGE = "mambaorg/micromamba:2.9.0"
-REQUIRED_PACKAGES = ("conda-forge::procps-ng",)
 GIT_VERSION_LENGTH = 7
 ENVIRONMENT_FILES = (
     "Dockerfile",
@@ -40,11 +39,11 @@ LABEL software.version="${version}"
 COPY --chown=$${MAMBA_USER}:$${MAMBA_USER} env.yaml /tmp/env.yaml
 
 RUN micromamba install -y -n base -f /tmp/env.yaml \\
+    && micromamba install -y -n base conda-forge::procps-ng \\
     && micromamba clean --all --yes \\
     && rm /tmp/env.yaml
 
-WORKDIR /data
-CMD ["/bin/bash", "-c"]
+ENV PATH="$${MAMBA_ROOT_PREFIX}/bin:$${PATH}"
 ''')
 
 GIT_DOCKERFILE_TEMPLATE = Template('''FROM ${base_image}
@@ -62,6 +61,8 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)
 
 # Git source: ${git_url} (requested ref: ${git_ref}, resolved commit: ${version})
 RUN python -m pip install --no-cache-dir git+${git_url}@${sha}
+
+RUN micromamba install -y -n base conda-forge::procps-ng
 
 WORKDIR /data
 CMD ["/bin/bash", "-c"]
@@ -104,6 +105,8 @@ def run_build(args: argparse.Namespace, root: Path) -> int:
         "docker", "buildx", "build", "--platform", args.platforms,
         "--tag", image,
     ]
+    if getattr(args, "no_cache", False):
+        command.append("--no-cache")
     if args.push:
         command.append("--push")
     command.append(str(path))
@@ -241,7 +244,6 @@ def write_container(
     """Write a Dockerfile and environment file for conda or Git installation."""
     path.mkdir(parents=True, exist_ok=True)
     packages = [
-        *REQUIRED_PACKAGES,
         *(conda_package_spec(package) for package in (args.package or [args.tool])),
     ]
     channels = args.channel or ["conda-forge", "bioconda"]
@@ -398,6 +400,10 @@ def parser() -> argparse.ArgumentParser:
         )
         subparser.add_argument("tool")
         subparser.add_argument("version")
+        subparser.add_argument(
+            "--no-cache", action="store_true",
+            help="build the image without using the Docker build cache",
+        )
         subparser.set_defaults(push=push)
     subparsers.add_parser("list", parents=[sub_common], help="list versioned containers")
     subparser = subparsers.add_parser(
