@@ -47,7 +47,22 @@ List all versioned containers:
 Create a micromamba-based definition from a conda package:
 
 ```bash
-./build.py bootstrap my-tool 1.2.3 --package package-name
+./build.py bootstrap my-tool 1.2.3 \
+  --package seqkit:2.13.0 \
+  --package another-package
+```
+
+`NAME:VERSION` is converted to Conda's pinned `NAME=VERSION` syntax in `env.yaml`.
+Generated environments also include `conda-forge::procps-ng`, which is required by Nextflow.
+
+Use `--build` to build the image immediately after creating the definition, or add
+`--push` to push it to the configured registry:
+
+```bash
+./build.py bootstrap my-tool 1.2.3 \
+  --package package-name \
+  --package another-package \
+  --build --push
 ```
 
 A pip-installable Python package can be built from a GitHub repository when it is not available as a conda package. The repository must support installation through `pip install git+URL`; this Git source option is not intended for arbitrary repositories. The branch or tag is resolved to a commit SHA. Its first seven characters become the directory version; the generated Dockerfile retains the full SHA for an exact source pin:

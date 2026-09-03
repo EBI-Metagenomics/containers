@@ -20,6 +20,7 @@ from urllib.request import Request, urlopen
 DEFAULT_REGISTRY = "quay.io/microbiome-informatics"
 DEFAULT_PLATFORMS = "linux/arm64,linux/amd64"
 DEFAULT_BASE_IMAGE = "mambaorg/micromamba:2.9.0"
+REQUIRED_PACKAGES = ("conda-forge::procps-ng",)
 GIT_VERSION_LENGTH = 7
 ENVIRONMENT_FILES = (
     "Dockerfile",
@@ -74,6 +75,7 @@ ${dependencies}
 ''')
 
 GIT_SOURCE_PATTERN = re.compile(r"git\+([^\s\"']+?)(?:@([^\s\"']+))?(?=\s|$)")
+PACKAGE_VERSION_PATTERN = re.compile(r"^(?P<name>[^:=\s]+):(?P<version>[^:\s]+)$")
 
 
 def container_dir(root: Path, tool: str, version: str) -> Path:
@@ -131,6 +133,14 @@ def yaml_items(items: list[str], indent: int = 2) -> str:
     """Render strings as a simple indented YAML list."""
     prefix = " " * indent
     return "\n".join(f"{prefix}- {item}" for item in items)
+
+
+def conda_package_spec(package: str) -> str:
+    """Accept ``name:version`` shorthand and return Conda's ``name=version`` form."""
+    match = PACKAGE_VERSION_PATTERN.fullmatch(package)
+    if match is None:
+        return package
+    return f"{match.group('name')}={match.group('version')}"
 
 
 def github_repo(url: str) -> tuple[str, str]:
@@ -230,7 +240,10 @@ def write_container(
 ) -> None:
     """Write a Dockerfile and environment file for conda or Git installation."""
     path.mkdir(parents=True, exist_ok=True)
-    packages = args.package or [args.tool]
+    packages = [
+        *REQUIRED_PACKAGES,
+        *(conda_package_spec(package) for package in (args.package or [args.tool])),
+    ]
     channels = args.channel or ["conda-forge", "bioconda"]
     if git_url:
         packages = ["git", "python", "pip", *packages]
@@ -258,7 +271,9 @@ def write_container(
 
 
 def bootstrap(args: argparse.Namespace, root: Path) -> int:
-    """Create a new container definition, resolving Git versions when requested."""
+    """Create a container definition and optionally build its image."""
+    if args.push and not args.build:
+        raise SystemExit("--push requires --build")
     git_url = None
     git_ref = None
     sha = None
@@ -274,6 +289,9 @@ def bootstrap(args: argparse.Namespace, root: Path) -> int:
     write_container(path, args, version, git_url, git_ref, sha)
     print(f"Created {path / 'Dockerfile'}")
     print(f"Created {path / 'env.yaml'}")
+    if args.build:
+        args.version = version
+        run_build(args, root)
     return 0
 
 
@@ -396,7 +414,8 @@ def parser() -> argparse.ArgumentParser:
     subparser.add_argument("tool")
     subparser.add_argument("version")
     subparser.add_argument(
-        "--package", action="append", help="conda package (repeatable; defaults to TOOL)"
+        "--package", action="append",
+        help="conda package, optionally NAME:VERSION (repeatable; defaults to TOOL)",
     )
     subparser.add_argument("--channel", action="append", help="conda channel (repeatable)")
     subparser.add_argument("--base-image", default=DEFAULT_BASE_IMAGE)
@@ -404,6 +423,12 @@ def parser() -> argparse.ArgumentParser:
     subparser.add_argument("--git-ref", help="GitHub branch or tag (defaults to main)")
     subparser.add_argument(
         "--force", action="store_true", help="overwrite files in an existing directory"
+    )
+    subparser.add_argument(
+        "--build", action="store_true", help="build the image after creating the definition"
+    )
+    subparser.add_argument(
+        "--push", action="store_true", help="push the image when used with --build"
     )
     subparser = subparsers.add_parser(
         "update", parents=[sub_common], help="copy a container using a latest package version"
