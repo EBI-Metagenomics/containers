@@ -7,8 +7,8 @@ LABEL software.version="2.13.0_3.11"
 COPY --chown=${MAMBA_USER}:${MAMBA_USER} env.yaml /tmp/env.yaml
 
 RUN micromamba install -y -n base -f /tmp/env.yaml \
+    && micromamba install -y -n base conda-forge::procps-ng \
     && micromamba clean --all --yes \
     && rm /tmp/env.yaml
 
-WORKDIR /data
-CMD ["/bin/bash", "-c"]
+ENV PATH="${MAMBA_ROOT_PREFIX}/bin:${PATH}"
