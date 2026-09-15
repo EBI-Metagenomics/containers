@@ -10,5 +10,8 @@ RUN micromamba install -y -n base -f /tmp/env.yaml \
     && micromamba clean --all --yes \
     && rm /tmp/env.yaml
 
+USER root
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
+
 WORKDIR /data
 CMD ["/bin/bash", "-c"]

@@ -14,5 +14,8 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)
 # Git source: https://github.com/johannahelene/gemsparcl (requested ref: main, resolved commit: 078c47d)
 RUN python -m pip install --no-cache-dir git+https://github.com/johannahelene/gemsparcl@078c47dbbc1a45f7ab2532666da13f4f2aaab6b8
 
+USER root
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
+
 WORKDIR /data
 CMD ["/bin/bash", "-c"]
