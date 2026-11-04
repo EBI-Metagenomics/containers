@@ -312,6 +312,21 @@ def latest_version(package: str, channel: str) -> str:
     return version
 
 
+def pypi_latest_version(package: str) -> str:
+    """Query PyPI for the latest version of a package."""
+    url = f"https://pypi.org/pypi/{quote(package)}/json"
+    request = Request(url, headers={"User-Agent": "containers-build.py/1.0"})
+    try:
+        with urlopen(request, timeout=20) as response:
+            data = json.load(response)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Could not query PyPI for {package}: {error}") from error
+    version = data.get("info", {}).get("version")
+    if not version:
+        raise SystemExit(f"No latest version reported for PyPI/{package}")
+    return version
+
+
 def show_latest(args: argparse.Namespace) -> int:
     """Print the latest conda version or resolved Git commit for a tool."""
     if args.git_url:
@@ -320,6 +335,10 @@ def show_latest(args: argparse.Namespace) -> int:
         print(f"{args.git_url}@{ref}: {short_git_sha(sha)}")
         return 0
     package = args.package or args.tool
+    if args.pypi:
+        version = pypi_latest_version(package)
+        print(f"pypi/{package}: {version}")
+        return 0
     version = latest_version(package, args.channel)
     print(f"{args.channel}/{package}: {version}")
     return 0
@@ -379,52 +398,96 @@ def update(args: argparse.Namespace, root: Path) -> int:
 def parser() -> argparse.ArgumentParser:
     """Create the command-line parser for all supported operations."""
     root_common = argparse.ArgumentParser(add_help=False)
-    root_common.add_argument("--root", type=Path, default=Path(__file__).resolve().parent)
+    root_help = "repository root with the TOOL/VERSION directories"
+    registry_help = f"image registry (env CONTAINER_REGISTRY, default {DEFAULT_REGISTRY})"
+    platforms_help = (
+        f"build platforms (env CONTAINER_PLATFORMS, default {DEFAULT_PLATFORMS})"
+    )
+    root_common.add_argument(
+        "--root", type=Path, default=Path(__file__).resolve().parent, help=root_help
+    )
     root_common.add_argument(
         "--registry",
         default=os.environ.get("CONTAINER_REGISTRY", DEFAULT_REGISTRY),
+        help=registry_help,
     )
     root_common.add_argument(
         "--platforms",
         default=os.environ.get("CONTAINER_PLATFORMS", DEFAULT_PLATFORMS),
+        help=platforms_help,
     )
     sub_common = argparse.ArgumentParser(add_help=False)
-    sub_common.add_argument("--root", type=Path, default=argparse.SUPPRESS)
-    sub_common.add_argument("--registry", default=argparse.SUPPRESS)
-    sub_common.add_argument("--platforms", default=argparse.SUPPRESS)
+    sub_common.add_argument("--root", type=Path, default=argparse.SUPPRESS, help=root_help)
+    sub_common.add_argument("--registry", default=argparse.SUPPRESS, help=registry_help)
+    sub_common.add_argument("--platforms", default=argparse.SUPPRESS, help=platforms_help)
     command_parser = argparse.ArgumentParser(description=__doc__, parents=[root_common])
     subparsers = command_parser.add_subparsers(dest="command", required=True)
-    for name, push in (("build", False), ("build-push", True)):
+    for name, push, help_text in (
+        ("build", False, "build a container image"),
+        ("build-push", True, "build a container image and push it to the registry"),
+    ):
         subparser = subparsers.add_parser(
-            name, parents=[sub_common], help="build a container image"
+            name,
+            parents=[sub_common],
+            help=help_text,
+            description=(
+                f"{help_text.capitalize()}. Builds TOOL/VERSION/Dockerfile with "
+                "docker buildx and tags it as REGISTRY/TOOL:VERSION."
+            ),
         )
-        subparser.add_argument("tool")
-        subparser.add_argument("version")
+        subparser.add_argument("tool", help="tool directory name")
+        subparser.add_argument("version", help="version directory name")
         subparser.add_argument(
             "--no-cache", action="store_true",
             help="build the image without using the Docker build cache",
         )
         subparser.set_defaults(push=push)
-    subparsers.add_parser("list", parents=[sub_common], help="list versioned containers")
-    subparser = subparsers.add_parser(
-        "latest", parents=[sub_common], help="query the latest package version"
+    subparsers.add_parser(
+        "list",
+        parents=[sub_common],
+        help="list versioned containers",
+        description="List each tool and its version directories that have a Dockerfile.",
     )
-    subparser.add_argument("tool")
+    subparser = subparsers.add_parser(
+        "latest",
+        parents=[sub_common],
+        help="query the latest package version",
+        description=(
+            "Print the latest version of a package from a conda channel "
+            "(default bioconda) or PyPI, or the commit SHA of a GitHub ref."
+        ),
+    )
+    subparser.add_argument("tool", help="tool name")
     subparser.add_argument("--package", help="package name (defaults to TOOL)")
-    subparser.add_argument("--channel", default="bioconda")
+    subparser.add_argument("--channel", default="bioconda", help="conda channel (default bioconda)")
+    subparser.add_argument(
+        "--pypi", action="store_true", help="query PyPI instead of a conda channel"
+    )
     subparser.add_argument("--git-url", help="pip-installable GitHub repository URL")
     subparser.add_argument("--git-ref", help="GitHub branch or tag (defaults to main)")
     subparser = subparsers.add_parser(
-        "bootstrap", parents=[sub_common], help="create a micromamba container"
+        "bootstrap",
+        parents=[sub_common],
+        help="create a micromamba container",
+        description=(
+            "Create TOOL/VERSION with a micromamba Dockerfile and env.yaml. "
+            "Packages come from conda channels, or from a GitHub repository "
+            "with --git-url. Optionally build and push the image."
+        ),
     )
-    subparser.add_argument("tool")
-    subparser.add_argument("version")
+    subparser.add_argument("tool", help="tool directory name")
+    subparser.add_argument(
+        "version", help="version directory name (replaced by the commit SHA with --git-url)"
+    )
     subparser.add_argument(
         "--package", action="append",
         help="conda package, optionally NAME:VERSION (repeatable; defaults to TOOL)",
     )
     subparser.add_argument("--channel", action="append", help="conda channel (repeatable)")
-    subparser.add_argument("--base-image", default=DEFAULT_BASE_IMAGE)
+    subparser.add_argument(
+        "--base-image", default=DEFAULT_BASE_IMAGE,
+        help=f"base image (default {DEFAULT_BASE_IMAGE})",
+    )
     subparser.add_argument("--git-url", help="pip-installable GitHub repository URL")
     subparser.add_argument("--git-ref", help="GitHub branch or tag (defaults to main)")
     subparser.add_argument(
@@ -437,12 +500,18 @@ def parser() -> argparse.ArgumentParser:
         "--push", action="store_true", help="push the image when used with --build"
     )
     subparser = subparsers.add_parser(
-        "update", parents=[sub_common], help="copy a container using a latest package version"
+        "update",
+        parents=[sub_common],
+        help="copy a container using a latest package version",
+        description=(
+            "Copy TOOL/VERSION to a new directory for the latest conda version "
+            "or GitHub commit, and replace the old version in its files."
+        ),
     )
-    subparser.add_argument("tool")
+    subparser.add_argument("tool", help="tool directory name")
     subparser.add_argument("version", help="existing container version to update")
     subparser.add_argument("--package", help="package name (defaults to TOOL)")
-    subparser.add_argument("--channel", default="bioconda")
+    subparser.add_argument("--channel", default="bioconda", help="conda channel (default bioconda)")
     subparser.add_argument("--git-url", help="pip-installable GitHub repository URL")
     subparser.add_argument("--git-ref", help="GitHub branch or tag (defaults to main)")
     subparser.add_argument("--yes", action="store_true", help="do not ask for confirmation")

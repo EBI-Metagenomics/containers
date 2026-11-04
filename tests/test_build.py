@@ -82,7 +82,7 @@ class BootstrapTests(unittest.TestCase):
             self.assertIn("  - samtools=1.20", env)
             dockerfile = (root / "tools" / "1.0" / "Dockerfile").read_text()
             self.assertIn(
-                "RUN micromamba install -y -n base conda-forge::procps-ng",
+                "micromamba install -y -n base conda-forge::procps-ng",
                 dockerfile,
             )
             command = run.call_args.args[0]
@@ -92,6 +92,21 @@ class BootstrapTests(unittest.TestCase):
     def test_push_requires_build(self):
         with self.assertRaisesRegex(SystemExit, "--push requires --build"):
             build.main(["bootstrap", "tools", "1.0", "--push"])
+
+
+class LatestTests(unittest.TestCase):
+    @patch.object(build, "latest_version")
+    @patch.object(build, "pypi_latest_version", return_value="1.5.6")
+    def test_latest_can_query_pypi(self, pypi, conda):
+        self.assertEqual(
+            build.main(
+                ["latest", "tools", "--package", "mgnify-pipelines-toolkit", "--pypi"]
+            ),
+            0,
+        )
+
+        pypi.assert_called_once_with("mgnify-pipelines-toolkit")
+        conda.assert_not_called()
 
 
 if __name__ == "__main__":

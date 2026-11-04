@@ -80,10 +80,11 @@ A pip-installable Python package can be built from a GitHub repository when it i
   --git-ref main
 ```
 
-Query the latest conda package version or resolve a GitHub ref:
+Query the latest conda package version, the latest PyPI version, or resolve a GitHub ref:
 
 ```bash
 ./build.py latest interproscan
+./build.py latest mgnify-pipelines-toolkit --pypi
 ./build.py latest gemsparcl \
   --git-url https://github.com/johannahelene/gemsparcl \
   --git-ref main
@@ -96,6 +97,17 @@ Copy an existing definition to the latest package version or Git commit:
 ```
 
 Review generated or updated files before building them. Existing non-empty destinations are protected unless `--force` is supplied.
+
+## Development
+
+The tasks run with [Task](https://taskfile.dev/). The lint tools run with `uvx` from [uv](https://docs.astral.sh/uv/), at the versions pinned in `Taskfile.yml`:
+
+```bash
+task lint         # lint the Python code (ruff) and the Dockerfiles (hadolint)
+task lint:python  # lint only the Python code
+task lint:docker  # lint only the Dockerfiles
+task test         # run the unit tests
+```
 
 ## Repository layout
 

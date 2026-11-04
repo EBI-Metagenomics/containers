@@ -1,0 +1,27 @@
+version: "3"
+
+vars:
+  RUFF_VERSION: 0.16.5
+  HADOLINT_VERSION: 2.15.1
+
+tasks:
+  lint:
+    desc: Lint the Python code and the Dockerfiles
+    cmds:
+      - task: lint:python
+      - task: lint:docker
+
+  lint:python:
+    desc: Lint the Python code with ruff
+    cmds:
+      - uvx ruff@{{.RUFF_VERSION}} check --target-version py39 build.py tests
+
+  lint:docker:
+    desc: Lint the Dockerfiles with hadolint
+    cmds:
+      - find . -name Dockerfile -not -path "./.*" -print0 | xargs -0 uvx --from hadolint-bin@{{.HADOLINT_VERSION}} hadolint
+
+  test:
+    desc: Run the unit tests
+    cmds:
+      - python3 -m unittest discover -s tests -v
