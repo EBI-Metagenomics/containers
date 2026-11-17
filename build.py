@@ -43,7 +43,13 @@ RUN micromamba install -y -n base -f /tmp/env.yaml \\
     && micromamba clean --all --yes \\
     && rm /tmp/env.yaml
 
+# The micromamba entrypoint activates the env, but Nextflow and
+# Singularity/Apptainer bypass it, so set the activation variables here.
+USER root
+
 ENV PATH="$${MAMBA_ROOT_PREFIX}/bin:$${PATH}"
+ENV CONDA_PREFIX="$${MAMBA_ROOT_PREFIX}"
+ENV CONDA_DEFAULT_ENV=base
 ''')
 
 GIT_DOCKERFILE_TEMPLATE = Template('''FROM ${base_image}
@@ -64,6 +70,14 @@ RUN python -m pip install --no-cache-dir git+${git_url}@${sha}
 
 RUN micromamba install -y -n base conda-forge::procps-ng
 
+# The micromamba entrypoint activates the env, but Nextflow and
+# Singularity/Apptainer bypass it, so set the activation variables here.
+USER root
+
+ENV PATH="$${MAMBA_ROOT_PREFIX}/bin:$${PATH}"
+ENV CONDA_PREFIX="$${MAMBA_ROOT_PREFIX}"
+ENV CONDA_DEFAULT_ENV=base
+
 WORKDIR /data
 CMD ["/bin/bash", "-c"]
 ''')
@@ -77,6 +91,7 @@ ${dependencies}
 
 GIT_SOURCE_PATTERN = re.compile(r"git\+([^\s\"']+?)(?:@([^\s\"']+))?(?=\s|$)")
 PACKAGE_VERSION_PATTERN = re.compile(r"^(?P<name>[^:=\s]+):(?P<version>[^:\s]+)$")
+PACKAGE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_.\-]+$")
 
 
 def container_dir(root: Path, tool: str, version: str) -> Path:
@@ -144,6 +159,19 @@ def conda_package_spec(package: str) -> str:
     if match is None:
         return package
     return f"{match.group('name')}={match.group('version')}"
+
+
+def pip_package_spec(package: str) -> str:
+    """Accept ``name:version`` shorthand and return pip's ``name==version`` form."""
+    match = PACKAGE_VERSION_PATTERN.fullmatch(package)
+    if match is None:
+        return package
+    return f"{match.group('name')}=={match.group('version')}"
+
+
+def package_name(spec: str) -> str:
+    """Return the package name of a conda or pip spec."""
+    return re.split(r"[=<>!~:\s]", spec.split("::")[-1], maxsplit=1)[0]
 
 
 def github_repo(url: str) -> tuple[str, str]:
@@ -241,12 +269,18 @@ def write_container(
     git_ref: str | None = None,
     sha: str | None = None,
 ) -> None:
-    """Write a Dockerfile and environment file for conda or Git installation."""
+    """Write a Dockerfile and environment file for conda, PyPI or Git installation."""
     path.mkdir(parents=True, exist_ok=True)
-    packages = [
-        *(conda_package_spec(package) for package in (args.package or [args.tool])),
-    ]
     channels = args.channel or ["conda-forge", "bioconda"]
+    if args.pypi:
+        packages = pypi_dependencies(args, version)
+    else:
+        packages = [
+            *(conda_package_spec(package) for package in (args.package or [args.tool])),
+        ]
+    if not git_url and not args.pypi:
+        packages = [pin_conda_package(package, channels) for package in packages]
+        check_tool_version(args.tool, version, packages)
     if git_url:
         packages = ["git", "python", "pip", *packages]
         dockerfile = GIT_DOCKERFILE_TEMPLATE.substitute(
@@ -272,10 +306,57 @@ def write_container(
     )
 
 
+def pin_conda_package(spec: str, channels: list[str]) -> str:
+    """Pin a bare conda package name to its latest version in ``channels``."""
+    if not PACKAGE_NAME_PATTERN.fullmatch(spec):
+        return spec
+    version = conda_latest_version(spec, channels)
+    print(f"Pinned {spec} to the latest version {version}")
+    return f"{spec}={version}"
+
+
+def pypi_dependencies(args: argparse.Namespace, version: str) -> list[str]:
+    """Return conda dependencies plus a pinned ``pip:`` section for PyPI packages."""
+    conda_packages = [conda_package_spec(package) for package in args.conda_package or []]
+    names = {package_name(package) for package in conda_packages}
+    for required in ("python", "pip"):
+        if required not in names:
+            conda_packages.append(required)
+    pip_packages = []
+    for package in args.package or [args.tool]:
+        spec = pip_package_spec(package)
+        if PACKAGE_NAME_PATTERN.fullmatch(spec):
+            latest = pypi_latest_version(spec)
+            print(f"Pinned {spec} to the latest version {latest}")
+            spec = f"{spec}=={latest}"
+        pip_packages.append(spec)
+    check_tool_version(args.tool, version, pip_packages)
+    pip_section = "pip:\n" + yaml_items(pip_packages, indent=4)
+    return [*conda_packages, pip_section]
+
+
+def check_tool_version(tool: str, version: str, packages: list[str]) -> None:
+    """Warn when the pinned version of TOOL differs from the directory version."""
+    for package in packages:
+        if package_name(package) != tool:
+            continue
+        pinned = re.split(r"==?", package, maxsplit=1)[-1]
+        if pinned != version:
+            print(
+                f"Warning: {tool} is pinned to {pinned}, "
+                f"but the container version is {version}",
+                file=sys.stderr,
+            )
+
+
 def bootstrap(args: argparse.Namespace, root: Path) -> int:
     """Create a container definition and optionally build its image."""
     if args.push and not args.build:
         raise SystemExit("--push requires --build")
+    if args.pypi and args.git_url:
+        raise SystemExit("--pypi cannot be used with --git-url")
+    if args.conda_package and not args.pypi:
+        raise SystemExit("--conda-package requires --pypi")
     git_url = None
     git_ref = None
     sha = None
@@ -310,6 +391,16 @@ def latest_version(package: str, channel: str) -> str:
     if not version:
         raise SystemExit(f"No latest version reported for {channel}/{package}")
     return version
+
+
+def conda_latest_version(package: str, channels: list[str]) -> str:
+    """Return the latest version of a package from the first channel that has it."""
+    for channel in channels:
+        try:
+            return latest_version(package, channel)
+        except SystemExit:
+            continue
+    raise SystemExit(f"{package} was not found in the channels: {', '.join(channels)}")
 
 
 def pypi_latest_version(package: str) -> str:
@@ -471,8 +562,8 @@ def parser() -> argparse.ArgumentParser:
         help="create a micromamba container",
         description=(
             "Create TOOL/VERSION with a micromamba Dockerfile and env.yaml. "
-            "Packages come from conda channels, or from a GitHub repository "
-            "with --git-url. Optionally build and push the image."
+            "Packages come from conda channels, from PyPI with --pypi, or from "
+            "a GitHub repository with --git-url. Optionally build and push the image."
         ),
     )
     subparser.add_argument("tool", help="tool directory name")
@@ -481,9 +572,20 @@ def parser() -> argparse.ArgumentParser:
     )
     subparser.add_argument(
         "--package", action="append",
-        help="conda package, optionally NAME:VERSION (repeatable; defaults to TOOL)",
+        help=(
+            "conda package (PyPI package with --pypi), optionally NAME:VERSION; "
+            "a NAME is pinned to its latest version (repeatable; defaults to TOOL)"
+        ),
     )
     subparser.add_argument("--channel", action="append", help="conda channel (repeatable)")
+    subparser.add_argument(
+        "--pypi", action="store_true",
+        help="install the --package packages from PyPI with pip",
+    )
+    subparser.add_argument(
+        "--conda-package", action="append",
+        help="conda package to install with --pypi, optionally NAME:VERSION (repeatable)",
+    )
     subparser.add_argument(
         "--base-image", default=DEFAULT_BASE_IMAGE,
         help=f"base image (default {DEFAULT_BASE_IMAGE})",

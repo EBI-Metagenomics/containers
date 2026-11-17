@@ -60,6 +60,8 @@ Create a micromamba-based definition from a conda package:
 ```
 
 `NAME:VERSION` is converted to Conda's pinned `NAME=VERSION` syntax in `env.yaml`.
+A package without a version is pinned to its latest version in the first channel that has it.
+`bootstrap` prints a warning when the pinned version of TOOL differs from the container version.
 Generated environments also include `conda-forge::procps-ng`, which is required by Nextflow.
 
 Use `--build` to build the image immediately after creating the definition, or add
@@ -71,6 +73,19 @@ Use `--build` to build the image immediately after creating the definition, or a
   --package another-package \
   --build --push
 ```
+
+Use `--pypi` to install the packages from PyPI with pip. Add conda packages, for example
+packages with compiled code, with `--conda-package`. `python` and `pip` are added when missing:
+
+```bash
+./build.py bootstrap mgnify-pipelines-toolkit 1.5.7 \
+  --pypi \
+  --conda-package python:3.12 \
+  --conda-package pyfastx:2.2.0
+```
+
+The generated Dockerfile sets `PATH`, `CONDA_PREFIX` and `CONDA_DEFAULT_ENV`, because Nextflow and
+Singularity/Apptainer do not run the micromamba entrypoint that activates the environment.
 
 A pip-installable Python package can be built from a GitHub repository when it is not available as a conda package. The repository must support installation through `pip install git+URL`; this Git source option is not intended for arbitrary repositories. The branch or tag is resolved to a commit SHA. Its first seven characters become the directory version; the generated Dockerfile retains the full SHA for an exact source pin:
 
