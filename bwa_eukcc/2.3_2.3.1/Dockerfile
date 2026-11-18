@@ -26,7 +26,7 @@ RUN apt-get update && \
 
 # install bwamem2
 WORKDIR /tmp
-ENV bwamem2Ver=2.2.1
+ENV bwamem2Ver=2.3
 RUN wget -q https://github.com/bwa-mem2/bwa-mem2/releases/download/v${bwamem2Ver}/bwa-mem2-${bwamem2Ver}_x64-linux.tar.bz2 && \
     tar jxf bwa-mem2-${bwamem2Ver}_x64-linux.tar.bz2 && \
     mv bwa-mem2-${bwamem2Ver}_x64-linux/bwa-mem2* /usr/local/bin/ && \
