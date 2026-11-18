@@ -2,6 +2,9 @@
 
 FROM ubuntu:22.04
 
+# bwa-mem2 needs zlib>=1.3.1 and eukcc 2 needs zlib<1.3 So, here
+# we avoid using a Miniconda installation for the `env.yaml` file.
+
 # install dependencies
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
